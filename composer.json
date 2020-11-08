@@ -12,12 +12,12 @@
         }
     ],
     "require": {
-        "php": "^7.3"
+        "php": "^7.3",
+        "laminas/laminas-text": "^2.8.0",
+        "nunomaduro/laravel-console-menu": "^3.2"
     },
     "require-dev": {
         "laravel-zero/framework": "^8.2",
-        "laminas/laminas-text": "^2.8.0",
-        "nunomaduro/laravel-console-menu": "^3.2",
         "mockery/mockery": "^1.4.2",
         "pestphp/pest": "^0.3"
     },
