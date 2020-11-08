@@ -25,38 +25,33 @@ class SetupCommand extends Command
     /**
      * Execute the console command.
      *
-     * @param CommandLine $cli
      * @return mixed
      */
-//    public function handle(CommandLine $cli){
     public function handle(){
 
         $php = $this->task('PHP Version', function(){
             return strnatcmp(phpversion(),'7.2.5') >= 0;
         });
 
-//        $composer = $this->task("Composer", function() use ($cli){
-////            $composer = $cli->runCommand('composer --version');
-//            $composer = $cli->run("composer --version");
-//            strpos($composer, 'Composer version');
-//        });
-//
-//        $make = $this->task('GNU Make', function() use ($cli) {
-////            $make = $cli->runCommand('make --version');
-//            $make = $cli->run('make --version');
-//            return strpos($make, 'GNU Make');
-//        });
-//
-//        $docker = $this->task("Docker", function() use ($cli) {
-////           $docker = $cli->runCommand('docker --version');
-//           $docker = $cli->run('docker --version');
-//           return strpos($docker, 'Docker version');
-//        });
+        $composer = $this->task("Composer", function(){
+            $composer = shell_exec('composer --version');
+            strpos($composer, 'Composer version');
+        });
 
-//        if(!$php || !$composer || !$make || !$docker){
-//            $this->info("This CLI not will work if any of them not installed");
-//            exit();
-//        }
+        $make = $this->task('GNU Make', function(){
+            $make = shell_exec('make --version');
+            return strpos($make, 'GNU Make');
+        });
+
+        $docker = $this->task("Docker", function() {
+           $docker = shell_exec('docker --version');
+           return strpos($docker, 'Docker version');
+        });
+
+        if(!$php || !$composer || !$make || !$docker){
+            $this->info("This CLI not will work if any of them not installed");
+            exit();
+        }
 
         $option = $this->menu("Setup", [
             "Laravel",

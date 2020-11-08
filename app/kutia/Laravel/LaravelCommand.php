@@ -24,4 +24,5 @@ abstract class LaravelCommand extends Command
         parent::__construct();
         $this->packagist = $packagist;
     }
+
 }
