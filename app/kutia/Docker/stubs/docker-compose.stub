@@ -1,0 +1,211 @@
+version: '3.5'
+
+networks:
+  laravel:
+
+services:
+  nginx:
+    build:
+      context: ./docker/nginx
+      args:
+        DEV_DOMAIN: ${DEV_DOMAIN}
+        NGINX_SSL: ${NGINX_SSL}
+    image: 'nginx:alpine'
+    container_name: ${PROJECT_NAME}_nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./src:/src
+      - ./docker/nginx/gzip/compression.conf:/etc/nginx/conf.d/compression.conf
+      - ./logs/nginx/error.log:/var/log/nginx/error_manual.log
+      - ./logs/nginx/access.log:/var/log/nginx/access_manual.log
+      - ./docker/certcache/certs:/etc/certcache/certs:ro
+    command: "/bin/sh -c 'while :; do sleep 36000 & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    links:
+      - php
+      - mysql
+      - redis
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: ./docker/php
+    image: 'php:alpine'
+    container_name: ${PROJECT_NAME}_php
+    ports:
+      - '9000:9000'
+    volumes:
+      - ./src:/src
+      - ./docker/php/php.ini-${PHP_FPM_CONF}:/usr/local/etc/php/php.ini
+      - ./logs/php/errors.log:/var/log/php-fpm/errors.log
+    networks:
+      - laravel
+
+  mysql:
+    build:
+      context: ./docker/mysql
+    image: 'mysql:5.7'
+    container_name: ${PROJECT_NAME}_mysql
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_DATABASE_TESTING: ${MYSQL_DATABASE_TESTING}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./logs/mysql/mysqld.log:/var/log/mysqld.log
+      - mysql_dir:/var/lib/mysql
+    networks:
+      - laravel
+
+  redis:
+    build:
+      context: ./docker/redis
+    image: 'redis:alpine'
+    container_name: ${PROJECT_NAME}_redis
+    volumes:
+      - ./logs/redis/errors.log:/var/log/redis/errors.log
+    ports:
+      - '6379:6379'
+    networks:
+      - laravel
+
+  laravel-echo-server:
+    build:
+      context: ./docker/echo
+      args:
+        DEV_DOMAIN: ${DEV_DOMAIN}
+        NGINX_SSL: ${NGINX_SSL}
+    container_name: ${PROJECT_NAME}_echo
+    volumes:
+      - ./docker/certcache/certs:/app
+      #- ./docker/echo/laravel-echo-server.json:/app/laravel-echo-server.json:ro
+    ports:
+      - '6001:6001'
+    links:
+      - redis
+    networks:
+      - laravel
+
+  worker:
+    build:
+      context: ./docker/worker
+      args:
+        CHANGE_SOURCE: ${CHANGE_SOURCE}
+        PHP_VERSION: ${PHP_VERSION}
+        PHALCON_VERSION: ${PHALCON_VERSION}
+        INSTALL_BZ2: ${PHP_WORKER_INSTALL_BZ2}
+        INSTALL_GD: ${PHP_WORKER_INSTALL_GD}
+        INSTALL_IMAGEMAGICK: ${PHP_WORKER_INSTALL_IMAGEMAGICK}
+        INSTALL_GMP: ${PHP_WORKER_INSTALL_GMP}
+        INSTALL_PGSQL: ${PHP_WORKER_INSTALL_PGSQL}
+        INSTALL_BCMATH: ${PHP_WORKER_INSTALL_BCMATH}
+        INSTALL_OCI8: ${PHP_WORKER_INSTALL_OCI8}
+        INSTALL_PHALCON: ${PHP_WORKER_INSTALL_PHALCON}
+        INSTALL_SOAP: ${PHP_WORKER_INSTALL_SOAP}
+        INSTALL_ZIP_ARCHIVE: ${PHP_WORKER_INSTALL_ZIP_ARCHIVE}
+        INSTALL_MYSQL_CLIENT: ${PHP_WORKER_INSTALL_MYSQL_CLIENT}
+        INSTALL_AMQP: ${PHP_WORKER_INSTALL_AMQP}
+        INSTALL_CASSANDRA: ${PHP_WORKER_INSTALL_CASSANDRA}
+        INSTALL_GEARMAN: ${PHP_WORKER_INSTALL_GEARMAN}
+        INSTALL_GHOSTSCRIPT: ${PHP_WORKER_INSTALL_GHOSTSCRIPT}
+        INSTALL_SWOOLE: ${PHP_WORKER_INSTALL_SWOOLE}
+        INSTALL_TAINT: ${PHP_WORKER_INSTALL_TAINT}
+        INSTALL_FFMPEG: ${PHP_WORKER_INSTALL_FFMPEG}
+        INSTALL_REDIS: ${PHP_WORKER_INSTALL_REDIS}
+        INSTALL_IMAP: ${PHP_WORKER_INSTALL_IMAP}
+        INSTALL_XMLRPC: ${PHP_WORKER_INSTALL_XMLRPC}
+        PUID: ${PHP_WORKER_PUID}
+        PGID: ${PHP_WORKER_PGID}
+    container_name: ${PROJECT_NAME}_worker
+    volumes:
+      - ./src:/src
+      - ./docker/worker/supervisord.d:/etc/supervisord.d
+    depends_on:
+      - workspace
+    extra_hosts:
+      - "dockerhost:${DOCKER_HOST_IP}"
+    networks:
+      - laravel
+
+  phpredisadmin:
+    image: erikdubbelboer/phpredisadmin
+    container_name: ${PROJECT_NAME}_redis_admin
+    environment:
+      - ADMIN_USER=${REDIS_ADMIN_USER}
+      - ADMIN_PASS=${REDIS_ADMIN_PASS}
+      - REDIS_1_HOST=${REDIS_1_HOST}
+      - REDIS_1_PORT=${REDIS_1_PORT}
+      - REDIS_1_AUTH=${REDIS_1_AUTH}
+    ports:
+      - '8383:80'
+    depends_on:
+      - redis
+    networks:
+      - laravel
+
+  workspace:
+    build:
+      context: ./docker/workspace
+      args:
+        WORKSPACE_NODE_VERSION: ${WORKSPACE_NODE_VERSION}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    image: 'workspace:ubuntu'
+    container_name: ${PROJECT_NAME}_workspace
+    volumes:
+      - ./src:/src
+    links:
+      - redis
+      - mysql
+    ports:
+      - '3000:3000'
+    networks:
+      - laravel
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ${PROJECT_NAME}_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: secret
+    restart: always
+    links:
+      - mysql
+    ports:
+      - 8181:80
+    depends_on:
+      - mysql
+    volumes:
+      - /sessions
+    networks:
+      - laravel
+  certcache:
+    container_name: ${PROJECT_NAME}_certcache
+    restart: unless-stopped
+    image: ghcr.io/93million/certcache
+    ports:
+      - "${CNIP}:53:53/udp"
+      - "${CNIP}:53:53/tcp"
+    volumes:
+      - ./docker/certcache/cache:/certcache/cache:rw
+      - ./docker/certcache/cahkeys:/certcache/cahkeys:ro
+      - ./docker/certcache/certs:/certcache/certs:rw
+    environment:
+      CERTCACHE_CERTBOT_EMAIL: ${EMAIL}
+      CERTCACHE_CERTS: |
+        - certName: web
+          domains:
+            - '${DEV_DOMAIN}'
+            - '*.${DEV_DOMAIN}'
+            - '*.auditor.${DEV_DOMAIN}'
+
+volumes:
+  mysql_dir:
+    driver: local

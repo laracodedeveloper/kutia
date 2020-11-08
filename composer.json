@@ -1,0 +1,44 @@
+{
+    "name": "kutia/kutia-cli",
+    "description": "Kutia CLI",
+    "keywords": ["console", "cli"],
+    "homepage": "http://kutia.net",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sami Maxhuni",
+            "email": "samimaxhuni@kutia.net"
+        }
+    ],
+    "require": {
+        "php": "^7.3",
+        "laminas/laminas-text": "^2.8.0",
+        "nunomaduro/laravel-console-menu": "^3.2",
+        "illuminate/container": "^8.9.0"
+    },
+    "require-dev": {
+        "laravel-zero/framework": "^8.2",
+        "mockery/mockery": "^1.4.2",
+        "pestphp/pest": "^0.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Kutia\\": "app/kutia"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "bin": ["builds/kutia-cli"]
+}

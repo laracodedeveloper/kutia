@@ -1,0 +1,10 @@
+/vendor
+/.idea
+/.vscode
+/.vagrant
+.phpunit.result.cache
+.env
+kutia-cli-backup
+README.md
+/composer.lock
+vendor-backup
