@@ -14,7 +14,7 @@
     "require": {
         "php": "^7.3",
         "laminas/laminas-text": "^2.8.0",
-        "nunomaduro/laravel-console-menu": "^3.2",
+        "nunomaduro/laravel-console-menu": "^3.2|^4.0",
         "laravel-zero/framework": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
