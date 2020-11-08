@@ -41,11 +41,9 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "bin": ["builds/kutia-cli"],
-    "repositories": {
-        "private-packagist": {
-            "type": "composer",
-            "url": "https://repo.packagist.com/kutia-test/"
-        },
-        "packagist.org": false
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
     }
 }
