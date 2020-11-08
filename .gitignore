@@ -8,3 +8,4 @@ kutia-cli-backup
 README.md
 /composer.lock
 vendor-backup
+composer.json.backup
